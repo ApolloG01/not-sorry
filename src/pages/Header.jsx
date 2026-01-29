@@ -11,7 +11,7 @@ function Header() {
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center z-10">
       <div className="flex items-center justify-between flex-1 mr-56">
         <div className="py-4">
-          <img src={logo} width="80px " />
+          <img src={logo} width="280px " />
         </div>
         <nav className="ml-8 flex gap-4 text-sm font-medium">
           <NavLink to="/" className={linkStyles}>
