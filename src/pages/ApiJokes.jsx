@@ -5,22 +5,22 @@ import { fetchJokes } from "../features/jokes/jokesSlice";
 import JokeCard from "../components/JokeCard";
 
 function ApiJokes() {
-  const { category } = useParams(); // Grabs Categories from the Sidebar NavLinks
+  const { category } = useParams(); // Gets Categories from the Sidebar NavLinks
 
   const dispatch = useDispatch();
 
-  const { apiJokes, loading, error, showDirty, isAuthenticated } = useSelector(
+  const { apiJokes, loading, showDirty, isAuthenticated } = useSelector(
     (state) => state.jokes,
   );
 
   // Check if viewing restricted content without auth
   const isRestricted =
-    (showDirty || category === "dark" || category === "explicit") &&
+    (showDirty || category === "Dark" || category === "explicit") &&
     !isAuthenticated;
 
   useEffect(() => {
     if (!isRestricted) {
-      const isDark = category === "dark";
+      const isDark = category === "Dark";
       const effectiveShowDirty = showDirty || category === "explicit";
       dispatch(
         fetchJokes({
@@ -49,10 +49,35 @@ function ApiJokes() {
   }
 
   return (
-    <div className="grid lg:grid-cols-3 gap-4">
-      {apiJokes.map((joke) => (
-        <JokeCard key={joke.id} joke={joke} />
-      ))}
+    <div className="px-2 md:px-8 py-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-800">
+          API Jokes
+        </h1>
+        {/* Optionally add a filter/search here */}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {apiJokes.map((joke, idx) => {
+          // Guarantee a unique id for each joke
+          const jokeWithId = {
+            ...joke,
+            id:
+              joke.id ??
+              joke.jokeId ??
+              `${joke.setup ?? ""}${joke.joke ?? ""}${joke.delivery ?? ""}`.slice(
+                0,
+                40,
+              ) + idx,
+          };
+          return (
+            <JokeCard
+              key={jokeWithId.id}
+              joke={jokeWithId}
+              isUserJoke={false}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

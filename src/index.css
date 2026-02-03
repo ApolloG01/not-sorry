@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+body {
+  font-family: "Inter", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 1.08rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  background: linear-gradient(120deg, #f6f7fa 0%, #e9ecef 100%);
+  color: #23272f;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #e9ecef;
+  a:hover,
+  a:focus {
+    text-decoration: underline;
+  }
+}
+
+a {
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover,
+a:focus {
+  text-decoration: underline;
+  text-decoration-color: #9333ea;
+}

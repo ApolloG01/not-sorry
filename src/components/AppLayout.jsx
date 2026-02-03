@@ -1,36 +1,41 @@
+import { useSelector } from "react-redux";
 import { Outlet } from "react-router-dom";
-import Header from "../pages/Header"; // Adjust path if needed
+import Header from "../pages/Header";
 import Sidebar from "../pages/Sidebar";
 
 function AppLayout() {
   return (
-    <div className="flex flex-col h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-linear-to- from-[#f6f7fa] to-[#e9ecef]">
       <Header />
-
-      {/* 2. MAIN CONTAINER - Three columns side by side */}
       <div className="flex flex-1 overflow-hidden">
-        {/* 3. LEFT - Navigation Sidebar */}
         <Sidebar />
-        {/* 4. MIDDLE - Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-10">
-          <div className="max-w-6xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-8 md:p-3">
+          <section className="relative flex flex-col items-center justify-center text-center py-10 mb-8 border-slate-100 rounded-3xl shadow-lg border border-slate-100 animate-fade-in">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-purple-200 drop-shadow-lg mb-4 tracking-tight animate-bounce-slow pb-3">
+              Welcome to{" "}
+              <span className="inline-block animate-wiggle text-stone-950">
+                Not Sorry
+              </span>
+            </h1>
+            <p className="max-w-2xl mx-auto text-lg md:text-xl font-medium text-slate-700 mb-2 animate-fade-in delay-200">
+              Unapologetically fun! Generate, save, and favorite hilarious jokes
+              <br />— or create your own and keep them forever.
+              <br /> Laughter is just a click away.
+            </p>
+            <span className="inline-block mt-4 text-3xl animate-bounce">
+              😂✨
+            </span>
+          </section>
+          <div className="max-w-5xl mx-auto">
             <Outlet />
           </div>
         </main>
-        {/* 5. RIGHT - Aside with previews/actions */}
-        <aside className="hidden lg:flex flex-col w-80 bg-white border-l border-slate-200 p-6 overflow-y-auto">
-          <h2 className="font-bold text-xl mb-4">My Joke Book</h2>
+        <aside className="hidden lg:flex flex-col w-80 bg-white/95 border-l border-slate-200 p-8 overflow-y-auto shadow-xl justify-center ">
+          <h2 className="font-bold text-xl mb-6 tracking-wide text-slate-700 mx-auto hover:opacity-5">
+            My Favoured Creations
+          </h2>
           <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-sm italic text-slate-500">
-              "You haven't saved any jokes yet..."
-            </div>
-          </div>
-
-          {/* Create button */}
-          <div className="mt-auto">
-            <button className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all active:scale-95">
-              + Create New Joke
-            </button>
+            <UserFavoriteJokes />
           </div>
         </aside>
       </div>
@@ -38,4 +43,29 @@ function AppLayout() {
   );
 }
 
+function UserFavoriteJokes() {
+  const { userJokes, favorites } = useSelector((state) => state.jokes);
+  const favUserJokes = userJokes.filter((joke) => favorites.includes(joke.id));
+
+  if (favUserJokes.length === 0) {
+    return (
+      <div className="p-4 bg-black border border-slate-500 text-sm italic text-white hover:shadow-lg hover:translate-y-1 transition-transform">
+        You haven't saved any jokes yet...
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-2 max-h-72 overflow-y-auto pr-2">
+      {favUserJokes.map((joke) => (
+        <li
+          key={joke.id}
+          className="p-4 border border-slate-200 shadow-sm text-white text-sm leading-snug font-medium rounded-xl bg-black hover:translate-y-1 transition-transform"
+        >
+          {joke.joke || joke.setup || joke.text || "Untitled"}
+        </li>
+      ))}
+    </ul>
+  );
+}
 export default AppLayout;

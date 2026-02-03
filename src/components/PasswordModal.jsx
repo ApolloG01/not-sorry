@@ -1,9 +1,16 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setAuthenticated } from "../features/jokes/jokesSlice";
+import { useNavigate } from "react-router-dom";
 
-export default function PasswordModal({ isOpen, onClose }) {
+export default function PasswordModal({
+  isOpen,
+  onClose,
+  pendingCategory,
+  onAuthSuccess,
+}) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -30,6 +37,12 @@ export default function PasswordModal({ isOpen, onClose }) {
     setUsername("");
     setPassword("");
     onClose();
+    if (pendingCategory) {
+      navigate(`/api-jokes/${pendingCategory.toLowerCase()}`);
+    }
+    if (onAuthSuccess) {
+      onAuthSuccess(pendingCategory);
+    }
   };
 
   if (!isOpen) return null;

@@ -16,17 +16,17 @@ A React + Redux Toolkit + React Router practice project for discovering, saving,
 
 ### Current Features
 
-- **Joke Categories**: Browse jokes by Programming, Dark, Misc, and Pun categories
+- **Joke Categories**: Browse jokes by Programming, Dark, Misc, Pun and Explicit categories
 - **Content Filtering**: Toggle explicit content visibility with authentication
 - **Password Protection**: Dark and Explicit categories are protected (requires credentials)
 - **Favorites System**: Save your favorite jokes for quick access
 - **Personal Jokes**: Create and manage your own joke collection
 - **Responsive Design**: Built with Tailwind CSS for mobile and desktop
 - **Two-Part Jokes**: Proper formatting for setup/delivery style jokes
+- 🗄️ **Local Storage**: Save favorites and personal jokes to browser storage
 
 ### Planned Features
 
-- 🗄️ **Local Storage**: Persist favorites and personal jokes to browser storage
 - 🔑 **Better Authentication**: Replace hardcoded password with proper user authentication
 - 🇮🇹 **Italian Support**: Multi-language interface and Italian joke sources
 - 📱 **Progressive Web App**: Offline support and installable app
@@ -136,8 +136,8 @@ https://v2.jokeapi.dev/joke/Programming,Miscellaneous,Dark,Pun?amount=10&blackli
 
 ### Phase 1: Storage (Next)
 
-- [ ] Implement Local Storage for favorites
-- [ ] Persist personal jokes to browser
+- [x] Implement Local Storage for favorites ✅
+- [x] Persist personal jokes to browser ✅
 - [ ] Add "Export/Import" functionality
 
 ### Phase 2: Multi-Language

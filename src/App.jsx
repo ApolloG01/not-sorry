@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import ApiJokes from "./pages/ApiJokes";
 import UserJokes from "./pages/UserJokes";
+import Favorites from "./pages/Favorites";
 
 const router = createBrowserRouter(
   [
@@ -19,6 +20,7 @@ const router = createBrowserRouter(
           element: <ApiJokes />,
         },
         { path: "my-jokes", element: <UserJokes /> },
+        { path: "favorites", element: <Favorites /> },
       ],
     },
   ],
