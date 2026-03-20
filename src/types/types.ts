@@ -21,7 +21,7 @@ export interface JokeI {
 
 export interface JokeCardPropsI {
   joke: JokeI;
-  isUserJoke?: boolean;
+  isUserJoke?: boolean | undefined;
 
   editable?: boolean;
   onEdit?: () => void;

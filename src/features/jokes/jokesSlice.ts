@@ -83,7 +83,7 @@ function loadFromStorage(key: string): JokeI[] {
 export const initialState: JokesStateI = {
   apiJokes: [],
   userJokes: loadFromStorage(USER_JOKES_KEY),
-  favorites: loadFromStorage(FAVORITES_KEY),
+  favorites: JSON.parse(localStorage.getItem("favoritedApiJokes") || "[]"),
   categories: ["Any", "Misc", "Programming", "Dark", "Pun"],
   currentCategory: "Any",
   showDirty: false,
@@ -168,17 +168,20 @@ const jokesSlice = createSlice({
 
     toggleFavorite: (state, action) => {
       const joke = action.payload;
-      const exists = state.favorites.some((f) => f.id === joke.id);
+      const index = state.favorites.findIndex((fav) => fav.id === joke.id);
 
-      if (exists) {
-        state.favorites = state.favorites.filter((f) => f.id !== joke.id);
+      if (index !== -1) {
+        state.favorites.splice(index, 1);
       } else {
         state.favorites.push(joke);
       }
 
       // Update storage for both user jokes and favorites
       syncUserJokesToStorage(state.userJokes, state.favorites);
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites));
+      localStorage.setItem(
+        "favoritedApiJokes",
+        JSON.stringify(state.favorites),
+      );
     },
   },
   extraReducers: (builder) => {
