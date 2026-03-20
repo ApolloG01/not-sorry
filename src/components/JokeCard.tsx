@@ -1,26 +1,27 @@
 import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import {
   toggleFavorite,
   deleteUserJoke,
   editUserJoke,
-} from "../features/jokes/jokesSlice";
+} from "../features/jokes/jokesSlice.js";
 import { Star, Trash2, SquarePen } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "../store.js";
+import type { JokeCardPropsI } from "../types/types.js";
 
-export default function JokeCard({ joke, isUserJoke }) {
+export default function JokeCard({ joke, isUserJoke }: JokeCardPropsI) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(
     joke.joke || joke.setup || joke.text || "",
   );
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [toast, setToast] = useState(null);
-  const dispatch = useDispatch();
-  const { favorites } = useSelector((state) => state.jokes);
+  const [toast, setToast] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { favorites } = useAppSelector((state) => state.jokes);
 
-  const isFavorited = favorites.includes(joke.id);
+  const isFavorited = favorites.some((fav) => fav.id === joke.id);
 
   const handleFavorite = () => {
-    dispatch(toggleFavorite(joke.id));
+    dispatch(toggleFavorite(joke));
     setToast(isFavorited ? "Removed from favorites" : "Added to favorites");
     setTimeout(() => setToast(null), 1800);
   };
@@ -44,12 +45,11 @@ export default function JokeCard({ joke, isUserJoke }) {
     setIsEditing(true);
   };
 
-  const handleEditChange = (e) => {
+  const handleEditChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditValue(e.target.value);
   };
 
   const handleEditSave = () => {
-    // Save the edited joke
     dispatch(editUserJoke({ id: joke.id, joke: editValue }));
     setIsEditing(false);
     setToast("Joke saved");
@@ -163,7 +163,7 @@ export default function JokeCard({ joke, isUserJoke }) {
           >
             <Star
               size={20}
-              fill={isFavorited ? "#000" : "none"}
+              fill={isFavorited ? "#fff" : "none"}
               strokeWidth={2}
             />
           </button>

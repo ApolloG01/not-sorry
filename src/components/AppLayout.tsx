@@ -1,7 +1,8 @@
 import { useSelector } from "react-redux";
 import { Outlet } from "react-router-dom";
-import Header from "../pages/Header";
-import Sidebar from "../pages/Sidebar";
+import Header from "../pages/Header.js";
+import Sidebar from "../pages/Sidebar.js";
+import { useAppSelector } from "../store.js";
 
 function AppLayout() {
   return (
@@ -10,7 +11,7 @@ function AppLayout() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-y-auto p-8 md:p-3">
-          <section className="relative flex flex-col items-center justify-center text-center py-10 mb-8 border-slate-100 rounded-3xl shadow-lg border border-slate-100 animate-fade-in">
+          <section className="relative flex flex-col items-center justify-center text-center py-10 mb-8 border-slate-100 rounded-3xl shadow-lg border  animate-fade-in">
             <h1 className="text-4xl md:text-5xl font-extrabold text-purple-200 drop-shadow-lg mb-4 tracking-tight animate-bounce-slow pb-3">
               Welcome to{" "}
               <span className="inline-block animate-wiggle text-stone-950">
@@ -44,8 +45,10 @@ function AppLayout() {
 }
 
 function UserFavoriteJokes() {
-  const { userJokes, favorites } = useSelector((state) => state.jokes);
-  const favUserJokes = userJokes.filter((joke) => favorites.includes(joke.id));
+  const { userJokes, favorites } = useAppSelector((state) => state.jokes);
+  const favUserJokes = userJokes.filter((joke) => favorites.includes(joke));
+
+  console.log(favUserJokes);
 
   if (favUserJokes.length === 0) {
     return (

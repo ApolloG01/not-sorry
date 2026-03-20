@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import {
   addUserJoke,
   editUserJoke,
   deleteUserJoke,
-} from "../features/jokes/jokesSlice";
-import JokeCard from "../components/JokeCard";
+} from "../features/jokes/jokesSlice.js";
+import JokeCard from "../components/JokeCard.js";
+import { useAppDispatch, useAppSelector } from "../store.js";
 
 function UserJokes() {
-  const dispatch = useDispatch();
-  const { userJokes } = useSelector((state) => state.jokes);
+  const dispatch = useAppDispatch();
+  const { userJokes } = useAppSelector((state) => state.jokes);
   const [newJoke, setNewJoke] = useState("");
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
 
   const handleAddJoke = () => {
@@ -21,7 +21,7 @@ function UserJokes() {
     }
   };
 
-  const handleEdit = (id, text) => {
+  const handleEdit = (id: number, text: string) => {
     setEditingId(id);
     setEditText(text);
   };
@@ -32,7 +32,7 @@ function UserJokes() {
     setEditText("");
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     dispatch(deleteUserJoke(id));
   };
 
@@ -67,7 +67,7 @@ function UserJokes() {
           editingId === joke.id ? (
             <div
               key={joke.id}
-              className="relative bg-white/70 backdrop-blur-md border border-white/30 rounded-2xl shadow-lg p-5 flex flex-col min-h-[140px]"
+              className="relative bg-white/70 backdrop-blur-md border border-white/30 rounded-2xl shadow-lg p-5 flex flex-col min-h-35"
             >
               <div className="absolute left-0 top-4 bottom-4 w-1 rounded bg-purple-400/80" />
               <textarea

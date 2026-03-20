@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import logo from "../assets/not-sorry-logo.png";
 
 function Header() {
-  const linkStyles = ({ isActive }) =>
+  const linkStyles = ({ isActive }: { isActive: boolean }) =>
     isActive
       ? "text-purple-600 font-bold"
       : "text-slate-400 hover:text-slate-600 transition-colors";

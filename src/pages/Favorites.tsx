@@ -1,12 +1,7 @@
 import React from "react";
-import { useSelector } from "react-redux";
-import JokeCard from "../components/JokeCard";
+import JokeCard from "../components/JokeCard.js";
 
 export default function Favorites() {
-  const { favorites, apiJokes, userJokes } = useSelector(
-    (state) => state.jokes,
-  );
-
   // Show all favorited API jokes from persistent storage
   let jokes = [];
   try {

@@ -1,6 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type {
+  CategoryMapI,
+  FetchJokesArgsI,
+  JokeI,
+  JokesStateI,
+} from "../../types/types.js";
 
-export const fetchJokes = createAsyncThunk(
+export const fetchJokes = createAsyncThunk<JokeI[], FetchJokesArgsI>(
   "jokes/fetchJokes",
   async ({ showDirty, isDark, category }) => {
     let blacklistFlags;
@@ -17,17 +23,18 @@ export const fetchJokes = createAsyncThunk(
     }
 
     // Map category to API format
-    const categoryMap = {
+    const categoryMap: CategoryMapI = {
       programming: "Programming",
       misc: "Miscellaneous",
       dark: "Dark",
       pun: "Pun",
     };
 
-    let jokes = [];
+    let jokes: JokeI[] = [];
     if (category?.toLowerCase() === "explicit") {
       // Fetch from all valid categories and filter for explicit jokes
       const categoriesToFetch = Object.values(categoryMap);
+
       for (const cat of categoriesToFetch) {
         const response = await fetch(
           `https://v2.jokeapi.dev/joke/${cat}?amount=9&blacklistFlags=religious,racist,sexist`,
@@ -35,12 +42,14 @@ export const fetchJokes = createAsyncThunk(
         if (response.ok) {
           const data = await response.json();
           const batch = data.jokes || [data];
-          jokes = jokes.concat(batch.filter((j) => j.flags?.explicit));
+          jokes = jokes.concat(batch.filter((j: JokeI) => j.flags?.explicit));
         }
       }
       return jokes;
     } else {
-      const apiCategory = categoryMap[category?.toLowerCase()] || "Any";
+      const lowerCategory = category?.toLowerCase();
+      const apiCategory =
+        categoryMap[lowerCategory as keyof CategoryMapI] || "Any";
       const response = await fetch(
         `https://v2.jokeapi.dev/joke/${apiCategory}?amount=9&blacklistFlags=${blacklistFlags}`,
       );
@@ -48,8 +57,7 @@ export const fetchJokes = createAsyncThunk(
         throw new Error(`Failed to fetch jokes: ${response.status}`);
       }
       const data = await response.json();
-      console.log(data);
-      console.log(data.jokes);
+
       return data.jokes || [data];
     }
   },
@@ -60,17 +68,19 @@ export const fetchJokes = createAsyncThunk(
 const FAVORITES_KEY = "favourites_v1";
 const USER_JOKES_KEY = "userJokes_v1";
 
-function loadFromStorage(key) {
+function loadFromStorage(key: string): JokeI[] {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+
+    return JSON.parse(raw) as JokeI[];
   } catch (e) {
     console.error(`Error loading from storage for key '${key}':`, e);
     return [];
   }
 }
 
-export const initialState = {
+export const initialState: JokesStateI = {
   apiJokes: [],
   userJokes: loadFromStorage(USER_JOKES_KEY),
   favorites: loadFromStorage(FAVORITES_KEY),
@@ -80,6 +90,24 @@ export const initialState = {
   isAuthenticated: false,
   loading: false,
   error: null,
+};
+
+const syncUserJokesToStorage = (userJokes: JokeI[], favorites: JokeI[]) => {
+  try {
+    localStorage.setItem(USER_JOKES_KEY, JSON.stringify(userJokes));
+
+    const favoritedUserJokes = userJokes.filter((uj) =>
+      favorites.some((fav) => fav.id === uj.id),
+    );
+
+    localStorage.setItem(
+      "favoritedUserJokes",
+      JSON.stringify(favoritedUserJokes),
+    );
+    localStorage.setItem("userJokes_length", userJokes.length.toString());
+  } catch (e) {
+    console.error("Storage sync failed:", e);
+  }
 };
 
 const jokesSlice = createSlice({
@@ -96,12 +124,18 @@ const jokesSlice = createSlice({
       state.isAuthenticated = action.payload;
     },
     addUserJoke: (state, action) => {
-      state.userJokes.push({ ...action.payload, id: Date.now() });
+      const newJoke = {
+        ...action.payload,
+        id: Date.now(),
+        isUserJoke: true,
+      };
+      state.userJokes.push(newJoke);
+      syncUserJokesToStorage(state.userJokes, state.favorites);
       try {
         localStorage.setItem(USER_JOKES_KEY, JSON.stringify(state.userJokes));
         // Save favorited user jokes
-        const favoritedUserJokes = state.userJokes.filter((joke) =>
-          state.favorites.includes(joke.id),
+        const favoritedUserJokes = state.userJokes.filter((userJoke) =>
+          state.favorites.some((fav) => fav.id === userJoke.id),
         );
         localStorage.setItem(
           "favoritedUserJokes",
@@ -118,96 +152,33 @@ const jokesSlice = createSlice({
     },
     editUserJoke: (state, action) => {
       const { id, ...updates } = action.payload;
-      const joke = state.userJokes.find((j) => j.id === id);
-      if (joke) Object.assign(joke, updates);
-      try {
-        localStorage.setItem(USER_JOKES_KEY, JSON.stringify(state.userJokes));
-        const favoritedUserJokes = state.userJokes.filter((joke) =>
-          state.favorites.includes(joke.id),
-        );
-        localStorage.setItem(
-          "favoritedUserJokes",
-          JSON.stringify(favoritedUserJokes),
-        );
-        localStorage.setItem(
-          "userJokes_length",
-          state.userJokes.length.toString(),
-        );
-      } catch (e) {
-        console.error(`Error loading from storage:`, e);
+      const index = state.userJokes.findIndex((j) => j.id === id);
+      if (index !== -1) {
+        state.userJokes[index] = { ...state.userJokes[index], ...updates };
+        syncUserJokesToStorage(state.userJokes, state.favorites);
       }
     },
+
     deleteUserJoke: (state, action) => {
       state.userJokes = state.userJokes.filter((j) => j.id !== action.payload);
-      try {
-        localStorage.setItem(USER_JOKES_KEY, JSON.stringify(state.userJokes));
-        const favoritedUserJokes = state.userJokes.filter((joke) =>
-          state.favorites.includes(joke.id),
-        );
-        localStorage.setItem(
-          "favoritedUserJokes",
-          JSON.stringify(favoritedUserJokes),
-        );
-        localStorage.setItem(
-          "userJokes_length",
-          state.userJokes.length.toString(),
-        );
-      } catch (e) {
-        console.error(`Error loading from storage':`, e);
-      }
+      // Removes from favorites if it was there
+      state.favorites = state.favorites.filter((f) => f.id !== action.payload);
+      syncUserJokesToStorage(state.userJokes, state.favorites);
     },
+
     toggleFavorite: (state, action) => {
-      const jokeId = action.payload;
-      if (state.favorites.includes(jokeId)) {
-        state.favorites = state.favorites.filter((id) => id !== jokeId);
+      const joke = action.payload;
+      const exists = state.favorites.some((f) => f.id === joke.id);
+
+      if (exists) {
+        state.favorites = state.favorites.filter((f) => f.id !== joke.id);
       } else {
-        state.favorites.push(jokeId);
+        state.favorites.push(joke);
       }
-      // Save to localStorage every time favorites change
-      try {
-        localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites));
-        // Save favorited user jokes
-        const favoritedUserJokes = state.userJokes.filter((joke) =>
-          state.favorites.includes(joke.id),
-        );
-        localStorage.setItem(
-          "favoritedUserJokes",
-          JSON.stringify(favoritedUserJokes),
-        );
-        // Save favorited API jokes (persist full objects, not just count)
-        let favoritedApiJokes = [];
-        // Collect all API jokes ever favorited (from all categories)
-        // Merge with existing favoritedApiJokes in localStorage
-        try {
-          const stored = localStorage.getItem("favoritedApiJokes");
-          favoritedApiJokes = stored ? JSON.parse(stored) : [];
-        } catch (e) {
-          favoritedApiJokes = [];
-        }
-        // Add new favorites from current apiJokes
-        state.favorites.forEach((id) => {
-          // Only add if not already present
-          if (!favoritedApiJokes.some((j) => j.id === id)) {
-            const joke = state.apiJokes.find((j) => j.id === id);
-            if (joke) favoritedApiJokes.push(joke);
-          }
-        });
-        // Remove any unfavorited jokes
-        favoritedApiJokes = favoritedApiJokes.filter((j) =>
-          state.favorites.includes(j.id),
-        );
-        localStorage.setItem(
-          "favoritedApiJokes",
-          JSON.stringify(favoritedApiJokes),
-        );
-        // Save apiJokeFavoriteCount
-        localStorage.setItem(
-          "apiJokeFavoriteCount",
-          favoritedApiJokes.length.toString(),
-        );
-      } catch (e) {
-        console.error(`Error saving to storage':`, e);
-      }
+
+      // Update storage for both user jokes and favorites
+      syncUserJokesToStorage(state.userJokes, state.favorites);
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites));
     },
   },
   extraReducers: (builder) => {

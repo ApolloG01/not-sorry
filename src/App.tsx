@@ -1,8 +1,8 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import AppLayout from "./components/AppLayout";
-import ApiJokes from "./pages/ApiJokes";
-import UserJokes from "./pages/UserJokes";
-import Favorites from "./pages/Favorites";
+import AppLayout from "./components/AppLayout.js";
+import ApiJokes from "./pages/ApiJokes.js";
+import UserJokes from "./pages/UserJokes.js";
+import Favorites from "./pages/Favorites.js";
 
 const router = createBrowserRouter(
   [

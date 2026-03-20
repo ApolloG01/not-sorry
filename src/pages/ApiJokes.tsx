@@ -1,16 +1,17 @@
 import { useParams } from "react-router-dom";
 import { useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchJokes } from "../features/jokes/jokesSlice";
-import JokeCard from "../components/JokeCard";
+import { fetchJokes } from "../features/jokes/jokesSlice.ts";
+import JokeCard from "../components/JokeCard.tsx";
+import { useAppDispatch, useAppSelector, type RootState } from "../store.js";
+import type { JokeI } from "../types/types.ts";
 
 function ApiJokes() {
   const { category } = useParams(); // Gets Categories from the Sidebar NavLinks
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
-  const { apiJokes, loading, showDirty, isAuthenticated } = useSelector(
-    (state) => state.jokes,
+  const { apiJokes, loading, showDirty, isAuthenticated } = useAppSelector(
+    (state: RootState) => state.jokes,
   );
 
   // Check if viewing restricted content without auth
@@ -54,16 +55,14 @@ function ApiJokes() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-800">
           API Jokes
         </h1>
-        {/* Optionally add a filter/search here */}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {apiJokes.map((joke, idx) => {
           // Guarantee a unique id for each joke
-          const jokeWithId = {
+          const jokeWithId: JokeI = {
             ...joke,
             id:
               joke.id ??
-              joke.jokeId ??
               `${joke.setup ?? ""}${joke.joke ?? ""}${joke.delivery ?? ""}`.slice(
                 0,
                 40,

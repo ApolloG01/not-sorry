@@ -1,29 +1,35 @@
 # Not Sorry - Joke Collection App
 
-A React + Redux Toolkit + React Router practice project for discovering, saving, and creating your own jokes. Never forget a good joke again!
+A React 19 + TypeScript + Redux Toolkit practice project for discovering, saving, and creating your own jokes.
 
-## 📋 About
+Never forget a good joke again!
 
-**Not Sorry** is a web app built to practice modern React concepts and state management. It combines API-driven joke discovery with personal joke creation, allowing you to:
+Not Sorry is a web app built to practice modern web development. It combines API-driven joke discovery with personal joke creation, featuring a fully type-safe architecture.
 
 - 🎭 Browse jokes from multiple categories
 - ❤️ Save your favorite jokes
 - ✍️ Create and manage personal jokes
 - 🔐 Access restricted content with password protection
 - 🌐 View content in multiple languages (Italian support planned)
+- 🧑‍💻 Fully type-safe with strict TypeScript
 
 ## 🚀 Features
 
 ### Current Features
 
-- **Joke Categories**: Browse jokes by Programming, Dark, Misc, Pun and Explicit categories
-- **Content Filtering**: Toggle explicit content visibility with authentication
-- **Password Protection**: Dark and Explicit categories are protected (requires credentials)
-- **Favorites System**: Save your favorite jokes for quick access
-- **Personal Jokes**: Create and manage your own joke collection
-- **Responsive Design**: Built with Tailwind CSS for mobile and desktop
-- **Two-Part Jokes**: Proper formatting for setup/delivery style jokes
-- 🗄️ **Local Storage**: Save favorites and personal jokes to browser storage
+Type-Safe State: Robust Redux management using TypeScript interfaces.
+
+Joke Categories: Browse Programming, Dark, Misc, Pun, and Explicit categories.
+
+Content Filtering: Toggle explicit content visibility with authentication guards.
+
+Favorites System: Persistent favorite jokes (API & User-created).
+
+CRUD Operations: Create, Read, Update, and Delete your own personal jokes.
+
+Responsive UI: Built with Tailwind CSS v4 and Lucide icons.
+
+🗄️ Persistence: Syncs favorites and personal jokes to localStorage
 
 ### Planned Features
 
@@ -34,12 +40,13 @@ A React + Redux Toolkit + React Router practice project for discovering, saving,
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 19
-- **State Management**: Redux Toolkit
-- **Routing**: React Router v6
-- **Styling**: Tailwind CSS v4
-- **Build Tool**: Vite
-- **APIs**: JokeAPI v2
+Frontend: React 19 (.tsx)
+Language: TypeScript (Strict Mode)
+State Management: Redux Toolkit (with Typed Hooks)
+Routing: React Router v6
+Styling: Tailwind CSS v4
+Icons: Lucide React
+Build Tool: Vite
 
 ## 🎮 Usage
 
@@ -77,22 +84,21 @@ A React + Redux Toolkit + React Router practice project for discovering, saving,
 ```
 src/
 ├── components/
-│   ├── JokeCard.jsx          # Individual joke display
-│   ├── PasswordModal.jsx      # Authentication modal
-│   └── AppLayout.jsx          # Main layout wrapper
+│   ├── JokeCard.tsx          # Typed props for joke display
+│   ├── PasswordModal.tsx     # Auth modal with event typing
+│   └── AppLayout.tsx         # Main layout wrapper
 ├── features/
 │   └── jokes/
-│       └── jokesSlice.js      # Redux state & thunks
+│       └── jokesSlice.ts     # Type-safe reducers & AsyncThunks
+├── types/
+│   └── types.ts              # Global interfaces (JokeI, etc.)
 ├── pages/
-│   ├── ApiJokes.jsx           # Joke browsing page
-│   ├── UserJokes.jsx          # Personal jokes page
-│   ├── Header.jsx             # Navigation header
-│   └── Sidebar.jsx            # Category navigation
-├── services/
-│   └── apiJokes.js            # JokeAPI integration
-├── App.jsx                    # Main app component
-├── store.js                   # Redux store configuration
-└── main.jsx                   # Entry point
+│   ├── ApiJokes.tsx
+│   ├── UserJokes.tsx
+│   ├── Sidebar.tsx           # Category logic with type narrowing
+│   └── Header.tsx
+├── store.ts                  # Typed RootState & AppDispatch
+└── main.tsx                  # Entry point
 ```
 
 ## 🔐 Authentication
@@ -106,7 +112,7 @@ src/
 **To Change Password:**
 
 ```javascript
-// src/components/PasswordModal.jsx - Line 13
+// src/components/PasswordModal.tsx - Line 13
 const CORRECT_PASSWORD = "your-password-here";
 ```
 
@@ -136,9 +142,7 @@ https://v2.jokeapi.dev/joke/Programming,Miscellaneous,Dark,Pun?amount=10&blackli
 
 ### Phase 1: Storage (Next)
 
-- [x] Implement Local Storage for favorites ✅
-- [x] Persist personal jokes to browser ✅
-- [ ] Add "Export/Import" functionality
+- [x] Implement Storage to Supabase ✅
 
 ### Phase 2: Multi-Language
 
@@ -149,7 +153,7 @@ https://v2.jokeapi.dev/joke/Programming,Miscellaneous,Dark,Pun?amount=10&blackli
 
 ### Phase 3: Enhanced Auth
 
-- [ ] Firebase authentication
+- [ ] Supabase authentication
 - [ ] User accounts and profiles
 - [ ] Persistent login sessions
 - [ ] Shared joke collections
@@ -161,24 +165,6 @@ https://v2.jokeapi.dev/joke/Programming,Miscellaneous,Dark,Pun?amount=10&blackli
 - [ ] Category tags on personal jokes
 - [ ] Analytics dashboard
 
-## 📝 Redux State Shape
-
-```javascript
-{
-  jokes: {
-    apiJokes: [],          // Jokes from API
-    userJokes: [],         // User-created jokes
-    favorites: [],         // IDs of favorited jokes
-    categories: [],        // Available categories
-    currentCategory: "",   // Selected category
-    showDirty: false,      // Explicit content toggle
-    isAuthenticated: false,// Password protection status
-    loading: false,        // Fetch loading state
-    error: null            // Error messages
-  }
-}
-```
-
 ## 🧪 Testing
 
 Currently tested manually. Future plans:
@@ -189,16 +175,29 @@ Currently tested manually. Future plans:
 
 ## 🚀 Deployment
 
-### GitHub Pages
+### Deployment: GitHub Pages
 
-App is configured for GitHub Pages deployment:
+#### Quick Start
 
-```bash
-npm run build
-npm run deploy
-```
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/ApolloG01/not-sorry.git
+   cd not-sorry
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Build the project:
+   ```bash
+   npm run build
+   ```
+4. Deploy to GitHub Pages:
+   ```bash
+   npm run deploy
+   ```
 
-**Live URL**: `https://ApolloG01.github.io/not-sorry/`
+**Live URL**: https://ApolloG01.github.io/not-sorry/
 
 ### Custom Domain
 
@@ -216,12 +215,12 @@ npm run deploy
 
 This project is designed to practice:
 
-✅ **React Hooks**: useState, useEffect, useCallback, useReducer  
-✅ **Redux Toolkit**: slices, thunks, selectors  
-✅ **React Router**: dynamic routing, URL parameters, nested routes  
-✅ **Async Operations**: API calls, loading states, error handling  
-✅ **State Management**: global state, local state, derived state  
-✅ **Tailwind CSS**: responsive design, utility classes  
+✅ **React Hooks**: useState, useEffect, useCallback, useReducer
+✅ **Redux Toolkit**: slices, thunks, selectors
+✅ **React Router**: dynamic routing, URL parameters, nested routes
+✅ **Async Operations**: API calls, loading states, error handling
+✅ **State Management**: global state, local state, derived state
+✅ **Tailwind CSS**: responsive design, utility classes
 ✅ **Component Architecture**: composition, prop drilling avoidance
 
 ## 📄 License
@@ -235,3 +234,7 @@ This is a practice project, but feel free to fork and experiment!
 ---
 
 **Built with ❤️ for learning React**
+
+```
+
+```

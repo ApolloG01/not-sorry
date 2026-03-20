@@ -1,26 +1,22 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { NavLink } from "react-router-dom";
 import {
   setCategory,
   fetchJokes,
   toggleShowDirty,
   toggleFavorite,
-} from "../features/jokes/jokesSlice";
+} from "../features/jokes/jokesSlice.js";
 import { useState } from "react";
-import PasswordModal from "../components/PasswordModal";
+import PasswordModal from "../components/PasswordModal.js";
 import { useNavigate } from "react-router-dom";
 import { Code2, Ghost, Zap, Laugh, Shield, Star } from "lucide-react";
-import ApiJokes from "./ApiJokes";
+import { useAppDispatch, useAppSelector } from "../store.js";
 
 function Sidebar() {
-  const location = useLocation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, favorites, apiJokes, userJokes } = useSelector(
-    (state) => state.jokes,
-  );
+  const { isAuthenticated, favorites } = useAppSelector((state) => state.jokes);
   const [showModal, setShowModal] = useState(false);
-  const [pendingCategory, setPendingCategory] = useState(null);
+  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
   const [showFavs, setShowFavs] = useState(false);
 
   const navItems = [
@@ -54,9 +50,16 @@ function Sidebar() {
   ];
 
   // Helper to get current showDirty and isDark from state
-  const showDirty = useSelector((state) => state.jokes.showDirty);
+  const showDirty = useAppSelector((state) => state.jokes.showDirty);
 
-  const handleNavClick = (category, restricted, event) => {
+  const apiJokeFavorites = favorites.filter((joke) => !joke.isUserJoke);
+  const apiJokeFavoriteCount = apiJokeFavorites.length;
+
+  const handleNavClick = (
+    category: string,
+    restricted: boolean | undefined,
+    event: React.MouseEvent<HTMLAnchorElement>,
+  ) => {
     if (restricted && !isAuthenticated) {
       handleRestrictedClick(category);
       event.preventDefault();
@@ -82,14 +85,14 @@ function Sidebar() {
     );
   };
 
-  const getNavStyles = ({ isActive }) =>
+  const getNavStyles = ({ isActive }: { isActive: boolean }) =>
     `group flex items-center gap-2 px-4 py-3 rounded-2xl font-medium transition-all duration-200 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-400 ${
       isActive
         ? "text-white bg-purple-600 shadow-md before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-purple-400 before:rounded"
         : "text-white hover:text-white hover:bg-purple-700/80"
     }`;
 
-  const handleRestrictedClick = (category) => {
+  const handleRestrictedClick = (category: string) => {
     if (!isAuthenticated) {
       setPendingCategory(category);
       setShowModal(true);
@@ -97,7 +100,7 @@ function Sidebar() {
   };
 
   // After authentication, navigate to the pending category and fetch jokes
-  const handleAuthSuccess = (category) => {
+  const handleAuthSuccess = (category: string) => {
     if (category) {
       dispatch(setCategory(category));
       dispatch(
@@ -115,16 +118,6 @@ function Sidebar() {
     setShowModal(false);
     setPendingCategory(null);
   };
-
-  // Use persistent favoritedApiJokes from localStorage for count and display
-  let favoritedApiJokes = [];
-  try {
-    const stored = localStorage.getItem("favoritedApiJokes");
-    favoritedApiJokes = stored ? JSON.parse(stored) : [];
-  } catch (e) {
-    favoritedApiJokes = [];
-  }
-  const apiJokeFavoriteCount = favoritedApiJokes.length;
 
   return (
     <>
@@ -167,16 +160,16 @@ function Sidebar() {
                 <li className="text-xs text-slate-500">No favourites yet</li>
               )}
 
-              {favoritedApiJokes.slice(0, 5).map((joke) => (
+              {favorites.slice(0, 5).map((joke) => (
                 <li
                   key={joke.id}
                   className="text-xs text-white flex justify-between items-center gap-2 bg-purple-700/80 rounded px-2 py-1 shadow-sm"
                 >
-                  <span className="truncate max-w-[120px]">
+                  <span className="truncate max-w-30">
                     {joke.joke ?? joke.setup ?? joke.text ?? "Untitled"}
                   </span>
                   <button
-                    onClick={() => dispatch(toggleFavorite(joke.id))}
+                    onClick={() => dispatch(toggleFavorite(joke))}
                     className="ml-2 text-xs text-purple-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
                     aria-label="Remove from favourites"
                   >
@@ -200,7 +193,11 @@ function Sidebar() {
         isOpen={showModal}
         onClose={handleModalClose}
         pendingCategory={pendingCategory}
-        onAuthSuccess={handleAuthSuccess}
+        onAuthSuccess={() => {
+          if (pendingCategory) {
+            handleAuthSuccess(pendingCategory);
+          }
+        }}
       />
     </>
   );

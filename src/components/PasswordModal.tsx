@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { setAuthenticated } from "../features/jokes/jokesSlice";
+import { setAuthenticated } from "../features/jokes/jokesSlice.js";
 import { useNavigate } from "react-router-dom";
+import type { PasswordModalI } from "../types/types.js";
 
 export default function PasswordModal({
   isOpen,
   onClose,
   pendingCategory,
   onAuthSuccess,
-}) {
+}: PasswordModalI) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -18,7 +19,7 @@ export default function PasswordModal({
   // Set your password here (you can change this to whatever you want)
   const CORRECT_PASSWORD = "areYouSure??";
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -37,11 +38,14 @@ export default function PasswordModal({
     setUsername("");
     setPassword("");
     onClose();
+
     if (pendingCategory) {
       navigate(`/api-jokes/${pendingCategory.toLowerCase()}`);
-    }
-    if (onAuthSuccess) {
-      onAuthSuccess(pendingCategory);
+
+      //  onAuthSuccess gets a guaranteed string, not null
+      if (onAuthSuccess) {
+        onAuthSuccess(pendingCategory);
+      }
     }
   };
 
