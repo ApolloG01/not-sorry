@@ -5,15 +5,16 @@
     "typeRoots": ["./src/types", "./node_modules/@types"],
     "noEmit": true,
     "moduleResolution": "bundler",
+
     // File Layout
     // "rootDir": "./src",
     // "outDir": "./dist",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "es6",
+    "module": "ESNext",
     "target": "esnext",
-    "types": [],
+    "types": ["vite/client", "node"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],

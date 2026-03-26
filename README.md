@@ -1,240 +1,46 @@
 # Not Sorry - Joke Collection App
 
-A React 19 + TypeScript + Redux Toolkit practice project for discovering, saving, and creating your own jokes.
+A React 19 + TypeScript + Redux Toolkit + Supabase project for discovering, saving, and creating jokes.
 
-Never forget a good joke again!
+## 🚀 Recent Evolution: From Local to Cloud
 
-Not Sorry is a web app built to practice modern web development. It combines API-driven joke discovery with personal joke creation, featuring a fully type-safe architecture.
+Originally a practice project, **Not Sorry** has evolved into a full-stack application. It no longer relies on `localStorage`; it now features a real-time sync engine powered by **Supabase**.
 
-- 🎭 Browse jokes from multiple categories
-- ❤️ Save your favorite jokes
-- ✍️ Create and manage personal jokes
-- 🔐 Access restricted content with password protection
-- 🌐 View content in multiple languages (Italian support planned)
-- 🧑‍💻 Fully type-safe with strict TypeScript
+- 🔐 **Real Authentication**: Secure login/signup via Supabase Auth.
+- ☁️ **Cloud Persistence**: Your favorites and custom jokes follow you across devices.
+- 🔄 **Real-time Sync**: Automatic state "hydration" on page refresh.
+- 🛠️ **Data Normalization**: Handles complex data mapping between external APIs and internal DB.
 
-## 🚀 Features
+## ✨ Features
 
-### Current Features
-
-Type-Safe State: Robust Redux management using TypeScript interfaces.
-
-Joke Categories: Browse Programming, Dark, Misc, Pun, and Explicit categories.
-
-Content Filtering: Toggle explicit content visibility with authentication guards.
-
-Favorites System: Persistent favorite jokes (API & User-created).
-
-CRUD Operations: Create, Read, Update, and Delete your own personal jokes.
-
-Responsive UI: Built with Tailwind CSS v4 and Lucide icons.
-
-🗄️ Persistence: Syncs favorites and personal jokes to localStorage
-
-### Planned Features
-
-- 🔑 **Better Authentication**: Replace hardcoded password with proper user authentication
-- 🇮🇹 **Italian Support**: Multi-language interface and Italian joke sources
-- 📱 **Progressive Web App**: Offline support and installable app
-- 📊 **Joke Stats**: Track most-liked categories and joke performance
+- **Dynamic Joke Discovery**: Fetches from JokeAPI with custom category filtering.
+- **The "Smart" Favorite System**: A unified toggle that handles both API-sourced jokes and user-created jokes seamlessly.
+- **Full CRUD for User Jokes**: Create, Read, Update, and Delete your own comedic gold.
+- **Auth-Guarded Content**: Access to "Dark" or "Explicit" humor is locked behind a secure session.
+- **Robust Error Handling**: Integrated "Toast" notifications and loading states for a premium UX.
 
 ## 🛠️ Tech Stack
 
-Frontend: React 19 (.tsx)
-Language: TypeScript (Strict Mode)
-State Management: Redux Toolkit (with Typed Hooks)
-Routing: React Router v6
-Styling: Tailwind CSS v4
-Icons: Lucide React
-Build Tool: Vite
+- **Frontend**: React 19 (Functional Components + Hooks)
+- **Language**: TypeScript (Strict Type Safety)
+- **Backend-as-a-Service**: Supabase (PostgreSQL + Auth)
+- **State Management**: Redux Toolkit (Normalized State)
+- **Styling**: Tailwind CSS v4
+- **Icons**: Lucide React
+- **Build Tool**: Vite
 
-## 🎮 Usage
+## 📁 Project Architecture & Data Flow
 
-### Browsing Jokes
+1. **Auth Listener**: `App.tsx` maintains a live subscription to Supabase Auth.
+2. **Data Hydration**: On login or refresh, Redux is "hydrated" with favorites from the cloud.
+3. **Optimistic UI**: The UI updates via Redux immediately, while Supabase handles the background sync.
 
-1. Click a category in the sidebar (Programming, Misc, Pun etc...)
-2. Jokes are fetched and displayed in a grid
+## 🚀 Deployment to GitHub Pages
 
-### Protected Content
+### 1. Prerequisites
 
-1. Click **Dark** or **Explicit** categories
-2. Enter credentials when prompted:
-   - Username: Any value (e.g., "user123")
-   - Password: `password123` (change in `src/components/PasswordModal.jsx`)
-3. Access restricted content after authentication
+Ensure you have the `gh-pages` package installed:
 
-### Saving Favorites
-
-- Click the **Favorite** button on any joke card
-- Favorited jokes are highlighted in purple
-
-### Creating Personal Jokes
-
-- Navigate to **My Jokes** section
-- Add new jokes with setup/delivery format
-- Delete jokes you no longer want
-
-### Content Filtering
-
-- Click **Explicit** in the sidebar to toggle explicit content visibility
-- Works independently for each category
-
-## 📁 Project Structure
-
-```
-src/
-├── components/
-│   ├── JokeCard.tsx          # Typed props for joke display
-│   ├── PasswordModal.tsx     # Auth modal with event typing
-│   └── AppLayout.tsx         # Main layout wrapper
-├── features/
-│   └── jokes/
-│       └── jokesSlice.ts     # Type-safe reducers & AsyncThunks
-├── types/
-│   └── types.ts              # Global interfaces (JokeI, etc.)
-├── pages/
-│   ├── ApiJokes.tsx
-│   ├── UserJokes.tsx
-│   ├── Sidebar.tsx           # Category logic with type narrowing
-│   └── Header.tsx
-├── store.ts                  # Typed RootState & AppDispatch
-└── main.tsx                  # Entry point
-```
-
-## 🔐 Authentication
-
-**Current Implementation:**
-
-- Password protection for Dark and Explicit categories
-- Hardcoded password in `PasswordModal.jsx` (line 13)
-- Session-based (resets on page reload)
-
-**To Change Password:**
-
-```javascript
-// src/components/PasswordModal.tsx - Line 13
-const CORRECT_PASSWORD = "your-password-here";
-```
-
-**Future Plan:**
-
-- Backend authentication with user accounts
-- Persistent sessions with tokens
-- Role-based access control
-
-## 🌐 API Integration
-
-Uses [JokeAPI](https://jokeapi.dev/) v2 for joke data.
-
-**Current Endpoint:**
-
-```
-https://v2.jokeapi.dev/joke/Programming,Miscellaneous,Dark,Pun?amount=10&blacklistFlags={flags}
-```
-
-**Blacklist Flags:**
-
-- Normal content: `nsfw,religious,political,racist,sexist,explicit`
-- Dark category: `nsfw,religious,political,racist,sexist,explicit`
-- Explicit category (authenticated): `religious,political,racist,sexist` (allows nsfw + explicit)
-
-## 🗺️ Roadmap
-
-### Phase 1: Storage (Next)
-
-- [x] Implement Storage to Supabase ✅
-
-### Phase 2: Multi-Language
-
-- [ ] Add Italian language support
-- [ ] Create Italian joke API integration
-- [ ] Language selector in header
-- [ ] Translate UI strings
-
-### Phase 3: Enhanced Auth
-
-- [ ] Supabase authentication
-- [ ] User accounts and profiles
-- [ ] Persistent login sessions
-- [ ] Shared joke collections
-
-### Phase 4: Polish
-
-- [ ] Dark mode toggle
-- [ ] Joke search/filter
-- [ ] Category tags on personal jokes
-- [ ] Analytics dashboard
-
-## 🧪 Testing
-
-Currently tested manually. Future plans:
-
-- Jest unit tests for Redux slices
-- React Testing Library for components
-- E2E tests with Cypress
-
-## 🚀 Deployment
-
-### Deployment: GitHub Pages
-
-#### Quick Start
-
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/ApolloG01/not-sorry.git
-   cd not-sorry
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Build the project:
-   ```bash
-   npm run build
-   ```
-4. Deploy to GitHub Pages:
-   ```bash
-   npm run deploy
-   ```
-
-**Live URL**: https://ApolloG01.github.io/not-sorry/
-
-### Custom Domain
-
-## 🐛 Known Issues / TODOs
-
-- [ ] Local Storage implementation for data persistence
-- [ ] Italian language support
-- [ ] Better password management (environment variables)
-- [ ] Mobile keyboard handling for forms
-- [ ] Error boundary for API failures
-- [ ] Loading skeleton screens
-- [ ] Joke pagination/lazy loading
-
-## 💡 Learning Goals
-
-This project is designed to practice:
-
-✅ **React Hooks**: useState, useEffect, useCallback, useReducer
-✅ **Redux Toolkit**: slices, thunks, selectors
-✅ **React Router**: dynamic routing, URL parameters, nested routes
-✅ **Async Operations**: API calls, loading states, error handling
-✅ **State Management**: global state, local state, derived state
-✅ **Tailwind CSS**: responsive design, utility classes
-✅ **Component Architecture**: composition, prop drilling avoidance
-
-## 📄 License
-
-MIT License - feel free to use this as a learning reference!
-
-## 🤝 Contributing
-
-This is a practice project, but feel free to fork and experiment!
-
----
-
-**Built with ❤️ for learning React**
-
-```
-
+```bash
+npm install gh-pages --save-dev
 ```

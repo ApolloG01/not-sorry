@@ -1,13 +1,15 @@
 export interface JokeI {
-  id: number;
-  text: string;
+  id?: number | string;
+  joke_id?: number | string;
+  supabase_id?: string;
+  text?: string;
   isUserJoke?: boolean;
   category: string;
   setup?: string;
   delivery?: string;
   joke?: string;
-  type: "twopart" | "single";
-  flags: {
+  type?: "twopart" | "single";
+  flags?: {
     nsfw: boolean;
     religious: boolean;
     political: boolean;
@@ -15,8 +17,8 @@ export interface JokeI {
     sexist: boolean;
     explicit: boolean;
   };
-  safe: boolean;
-  lang: string;
+  safe?: boolean;
+  lang?: string;
 }
 
 export interface JokeCardPropsI {
@@ -63,4 +65,13 @@ export interface PasswordModalI {
   onClose: () => void;
   pendingCategory: string | null;
   onAuthSuccess: (category: string) => void;
+}
+
+export interface FavoriteJoke {
+  id: number;
+  setup?: string;
+  isUserJoke?: boolean;
+  delivery?: string;
+  text?: string;
+  category: string;
 }

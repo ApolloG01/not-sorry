@@ -86,10 +86,10 @@ function Sidebar() {
   };
 
   const getNavStyles = ({ isActive }: { isActive: boolean }) =>
-    `group flex items-center gap-2 px-4 py-3 rounded-2xl font-medium transition-all duration-200 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-400 ${
+    `group flex items-center gap-2 px-4 py-3 rounded-2xl font-medium transition-all duration-200 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-400 no-underline ${
       isActive
         ? "text-white bg-purple-600 shadow-md before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-purple-400 before:rounded"
-        : "text-white hover:text-white hover:bg-purple-700/80"
+        : "text-white hover:text-white hover:bg-purple-700/80 hover:no-underline"
     }`;
 
   const handleRestrictedClick = (category: string) => {
@@ -182,7 +182,7 @@ function Sidebar() {
 
           <NavLink
             to="/favorites"
-            className="mt-3 block text-xs text-white hover:text-purple-300 font-semibold transition focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="mt-3 block text-xs text-white hover:text-purple-300 hover:no-underline no-underline font-semibold transition focus:outline-none focus:ring-2 focus:ring-purple-400"
           >
             Jokes I liked
           </NavLink>

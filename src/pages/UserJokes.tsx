@@ -6,17 +6,35 @@ import {
 } from "../features/jokes/jokesSlice.js";
 import JokeCard from "../components/JokeCard.js";
 import { useAppDispatch, useAppSelector } from "../store.js";
+import supabase from "../services/supabase";
 
 function UserJokes() {
   const dispatch = useAppDispatch();
   const { userJokes } = useAppSelector((state) => state.jokes);
   const [newJoke, setNewJoke] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editText, setEditText] = useState("");
 
-  const handleAddJoke = () => {
-    if (newJoke.trim()) {
-      dispatch(addUserJoke({ text: newJoke, category: "user" }));
+  const handleAddJoke = async () => {
+    if (!newJoke.trim()) return;
+
+    const { data, error } = await supabase
+      .from("jokes")
+      .insert([
+        {
+          text: newJoke,
+          category: "user",
+        },
+      ])
+      .select();
+
+    if (error) {
+      console.error("Error saving joke:", error.message);
+      return;
+    }
+
+    if (data && data[0]) {
+      dispatch(addUserJoke(data[0]));
       setNewJoke("");
     }
   };
@@ -26,14 +44,35 @@ function UserJokes() {
     setEditText(text);
   };
 
-  const handleSaveEdit = () => {
-    dispatch(editUserJoke({ id: editingId, text: editText }));
-    setEditingId(null);
-    setEditText("");
+  const handleSaveEdit = async () => {
+    if (!editingId) return;
+
+    const { error } = await supabase
+      .from("jokes")
+      .update({ text: editText })
+      .eq("id", editingId);
+
+    if (error) {
+      console.error("Error updating joke:", error.message);
+      return;
+    }
+
+    if (!error) {
+      dispatch(editUserJoke({ id: editingId, text: editText }));
+      setEditingId(null);
+      setEditText("");
+    }
   };
 
-  const handleDelete = (id: number) => {
-    dispatch(deleteUserJoke(id));
+  const handleDelete = async (id: string | number) => {
+    const { error } = await supabase.from("jokes").delete().eq("id", id);
+
+    if (error) {
+      console.error("Error deleting joke:", error.message);
+      return;
+    }
+
+    if (!error) dispatch(deleteUserJoke(id));
   };
 
   return (

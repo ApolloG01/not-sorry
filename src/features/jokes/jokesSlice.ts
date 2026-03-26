@@ -9,20 +9,16 @@ import type {
 export const fetchJokes = createAsyncThunk<JokeI[], FetchJokesArgsI>(
   "jokes/fetchJokes",
   async ({ showDirty, isDark, category }) => {
-    let blacklistFlags;
-
-    if (isDark) {
-      // Dark jokes: always filter out explicit content
-      blacklistFlags = "nsfw,religious,racist,sexist,explicit";
-    } else if (showDirty) {
-      // Explicit content: allow explicit and nsfw when authenticated
-      blacklistFlags = "religious,racist,sexist";
-    } else {
-      // Regular content: filter everything sensitive
-      blacklistFlags = "nsfw,religious,racist,sexist,explicit";
+    const isSafeModeActive = showDirty === false;
+    // Hard bans that never change
+    const activeBlacklist = ["racist", "sexist"];
+    // Add sensitive categories only if Safe Mode is ON
+    if (isSafeModeActive || isDark) {
+      activeBlacklist.push("nsfw", "religious", "explicit");
     }
 
-    // Map category to API format
+    const blacklistFlags = activeBlacklist.join(",");
+
     const categoryMap: CategoryMapI = {
       programming: "Programming",
       misc: "Miscellaneous",
@@ -30,60 +26,24 @@ export const fetchJokes = createAsyncThunk<JokeI[], FetchJokesArgsI>(
       pun: "Pun",
     };
 
-    let jokes: JokeI[] = [];
-    if (category?.toLowerCase() === "explicit") {
-      // Fetch from all valid categories and filter for explicit jokes
-      const categoriesToFetch = Object.values(categoryMap);
+    const lowerCategory = category?.toLowerCase();
+    const apiCategory =
+      categoryMap[lowerCategory as keyof CategoryMapI] ?? "Any";
 
-      for (const cat of categoriesToFetch) {
-        const response = await fetch(
-          `https://v2.jokeapi.dev/joke/${cat}?amount=9&blacklistFlags=religious,racist,sexist`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          const batch = data.jokes || [data];
-          jokes = jokes.concat(batch.filter((j: JokeI) => j.flags?.explicit));
-        }
-      }
-      return jokes;
-    } else {
-      const lowerCategory = category?.toLowerCase();
-      const apiCategory =
-        categoryMap[lowerCategory as keyof CategoryMapI] || "Any";
-      const response = await fetch(
-        `https://v2.jokeapi.dev/joke/${apiCategory}?amount=9&blacklistFlags=${blacklistFlags}`,
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to fetch jokes: ${response.status}`);
-      }
-      const data = await response.json();
+    const response = await fetch(
+      `https://v2.jokeapi.dev/joke/${apiCategory}?amount=9&blacklistFlags=${blacklistFlags}`,
+    );
 
-      return data.jokes || [data];
-    }
+    if (!response.ok) throw new Error(`Failed to fetch jokes`);
+    const data = await response.json();
+    return data.jokes ?? [data];
   },
 );
 
-// Simple localStorage helpers for favorites
-
-const FAVORITES_KEY = "favourites_v1";
-const USER_JOKES_KEY = "userJokes_v1";
-
-function loadFromStorage(key: string): JokeI[] {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return [];
-
-    return JSON.parse(raw) as JokeI[];
-  } catch (e) {
-    console.error(`Error loading from storage for key '${key}':`, e);
-    return [];
-  }
-}
-
 export const initialState: JokesStateI = {
   apiJokes: [],
-  userJokes: loadFromStorage(USER_JOKES_KEY),
-  favorites: JSON.parse(localStorage.getItem("favoritedApiJokes") || "[]"),
+  userJokes: [],
+  favorites: [],
   categories: ["Any", "Misc", "Programming", "Dark", "Pun"],
   currentCategory: "Any",
   showDirty: false,
@@ -92,28 +52,13 @@ export const initialState: JokesStateI = {
   error: null,
 };
 
-const syncUserJokesToStorage = (userJokes: JokeI[], favorites: JokeI[]) => {
-  try {
-    localStorage.setItem(USER_JOKES_KEY, JSON.stringify(userJokes));
-
-    const favoritedUserJokes = userJokes.filter((uj) =>
-      favorites.some((fav) => fav.id === uj.id),
-    );
-
-    localStorage.setItem(
-      "favoritedUserJokes",
-      JSON.stringify(favoritedUserJokes),
-    );
-    localStorage.setItem("userJokes_length", userJokes.length.toString());
-  } catch (e) {
-    console.error("Storage sync failed:", e);
-  }
-};
-
 const jokesSlice = createSlice({
   name: "jokes",
   initialState,
   reducers: {
+    setAuth: (state, action) => {
+      state.isAuthenticated = action.payload;
+    },
     setCategory: (state, action) => {
       state.currentCategory = action.payload;
     },
@@ -123,65 +68,69 @@ const jokesSlice = createSlice({
     setAuthenticated: (state, action) => {
       state.isAuthenticated = action.payload;
     },
-    addUserJoke: (state, action) => {
-      const newJoke = {
-        ...action.payload,
-        id: Date.now(),
-        isUserJoke: true,
-      };
-      state.userJokes.push(newJoke);
-      syncUserJokesToStorage(state.userJokes, state.favorites);
-      try {
-        localStorage.setItem(USER_JOKES_KEY, JSON.stringify(state.userJokes));
-        // Save favorited user jokes
-        const favoritedUserJokes = state.userJokes.filter((userJoke) =>
-          state.favorites.some((fav) => fav.id === userJoke.id),
-        );
-        localStorage.setItem(
-          "favoritedUserJokes",
-          JSON.stringify(favoritedUserJokes),
-        );
-        // Save userJokes length
-        localStorage.setItem(
-          "userJokes_length",
-          state.userJokes.length.toString(),
-        );
-      } catch (e) {
-        console.error(`Error loading from storage :`, e);
+    setFavorites: (state, action) => {
+      const rawArray = action.payload || [];
+
+      state.favorites = rawArray.map((row: any) => {
+        // 1. If 'joke_data' exists, use it. If not, the row itself IS the joke.
+        const data = row.joke_data ? row.joke_data : row;
+
+        return {
+          // 2. Spread the data to get all the fields (text, setup, etc.)
+          ...data,
+
+          // 3. Ensure we have a string ID from somewhere
+          id: String(row.joke_id || data.id || row.id),
+          joke_id: String(row.joke_id || data.id || row.id),
+
+          // 4. Map the text correctly
+          text:
+            data.text ||
+            data.joke ||
+            (data.setup ? `${data.setup} ${data.delivery}` : ""),
+
+          // 5. Keep the category
+          category: row.category || data.category || "general",
+          isUserJoke: row.category === "user" || data.isUserJoke === true,
+        };
+      });
+    },
+    setUserJokes: (state, action) => {
+      state.userJokes = action.payload;
+    },
+    toggleFavorite: (state, action) => {
+      const joke = action.payload;
+      const index = state.favorites.findIndex((fav) => {
+        const favId = fav.id ?? fav.joke_id;
+        const currentId = joke.id ?? joke.joke_id;
+        return favId === currentId;
+      });
+      if (index !== -1) {
+        state.favorites.splice(index, 1);
+      } else {
+        state.favorites.push(joke);
       }
+    },
+    addUserJoke: (state, action) => {
+      state.userJokes.push(action.payload);
     },
     editUserJoke: (state, action) => {
       const { id, ...updates } = action.payload;
       const index = state.userJokes.findIndex((j) => j.id === id);
       if (index !== -1) {
         state.userJokes[index] = { ...state.userJokes[index], ...updates };
-        syncUserJokesToStorage(state.userJokes, state.favorites);
       }
     },
-
     deleteUserJoke: (state, action) => {
       state.userJokes = state.userJokes.filter((j) => j.id !== action.payload);
-      // Removes from favorites if it was there
-      state.favorites = state.favorites.filter((f) => f.id !== action.payload);
-      syncUserJokesToStorage(state.userJokes, state.favorites);
-    },
-
-    toggleFavorite: (state, action) => {
-      const joke = action.payload;
-      const index = state.favorites.findIndex((fav) => fav.id === joke.id);
-
-      if (index !== -1) {
-        state.favorites.splice(index, 1);
-      } else {
-        state.favorites.push(joke);
-      }
-
-      // Update storage for both user jokes and favorites
-      syncUserJokesToStorage(state.userJokes, state.favorites);
-      localStorage.setItem(
-        "favoritedApiJokes",
-        JSON.stringify(state.favorites),
+      state.favorites = state.favorites.filter(
+        (f) => (f.id ?? f.joke_id) !== action.payload,
       );
+    },
+    clearAuth: (state) => {
+      state.isAuthenticated = false;
+      state.favorites = [];
+      state.userJokes = [];
     },
   },
   extraReducers: (builder) => {
@@ -191,23 +140,35 @@ const jokesSlice = createSlice({
       })
       .addCase(fetchJokes.fulfilled, (state, action) => {
         state.loading = false;
-        state.apiJokes = action.payload;
+        // Normalize the API jokes so they 'look' like your Supabase jokes
+        state.apiJokes = action.payload.map((joke: any) => ({
+          ...joke,
+          // Ensure 'text' always exists so the UI is consistent
+          text:
+            joke.joke ||
+            (joke.setup ? `${joke.setup} ... ${joke.delivery}` : ""),
+          id: String(joke.id), // Ensure ID is always a string
+        }));
       })
       .addCase(fetchJokes.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.error.message ?? "Something went wrong";
       });
   },
 });
 
 export const {
+  setAuth,
   setCategory,
   toggleShowDirty,
   setAuthenticated,
   addUserJoke,
   editUserJoke,
+  setFavorites,
+  setUserJokes,
   deleteUserJoke,
   toggleFavorite,
+  clearAuth,
 } = jokesSlice.actions;
 
 export default jokesSlice.reducer;

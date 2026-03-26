@@ -1,22 +1,28 @@
-import React from "react";
 import JokeCard from "../components/JokeCard.js";
-import type { JokeI } from "../types/types.js";
 import { useAppSelector } from "../store.js";
+import { Navigate } from "react-router-dom";
 
 export default function Favorites() {
-  const { favorites } = useAppSelector((state) => state.jokes);
+  const { isAuthenticated, favorites } = useAppSelector((state) => state.jokes);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {favorites.length === 0 ? (
-        <p>No favorites yet. Go find some funny stuff!</p>
+        <div className="col-span-full py-20 text-center">
+          <p className="text-slate-500 font-medium">
+            No favorites yet. Go find some funny stuff!
+          </p>
+        </div>
       ) : (
-        favorites.map((joke) => (
+        favorites.map((joke, index) => (
           <JokeCard
-            key={joke.id}
+            key={`${joke.id}-${index}`}
             joke={joke}
-            // If the joke has the flag we added earlier, it's a user joke
-            isUserJoke={joke.isUserJoke ?? false}
+            isUserJoke={joke.category === "user" || joke.isUserJoke}
           />
         ))
       )}

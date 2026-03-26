@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   toggleFavorite,
   deleteUserJoke,
@@ -7,168 +7,214 @@ import {
 import { Star, Trash2, SquarePen } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../store.js";
 import type { JokeCardPropsI } from "../types/types.js";
+import supabase from "../services/supabase.ts";
 
 export default function JokeCard({ joke, isUserJoke }: JokeCardPropsI) {
+  const dispatch = useAppDispatch();
+  const { favorites, isAuthenticated } = useAppSelector((state) => state.jokes);
+
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(
-    joke.joke || joke.setup || joke.text || "",
-  );
+  const [editValue, setEditValue] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const dispatch = useAppDispatch();
-  const { favorites } = useAppSelector((state) => state.jokes);
 
-  const isFavorited = favorites.some((fav) => fav.id === joke.id);
+  // Determine what text to show safely
+  const jokeText = joke.text || joke.joke || "";
+  const hasTwoParts = !!joke.setup;
 
-  const handleFavorite = () => {
-    dispatch(toggleFavorite(joke));
-    setToast(isFavorited ? "Removed from favorites" : "Added to favorites");
-    setTimeout(() => setToast(null), 1800);
+  useEffect(() => {
+    setEditValue(jokeText || joke.setup || "");
+  }, [joke, jokeText]);
+
+  const targetId = String(joke.id ?? joke.joke_id ?? "");
+
+  const isFavorited = favorites.some((fav) => {
+    const favId = String(fav.id ?? fav.joke_id ?? "");
+    return favId === targetId && targetId !== "";
+  });
+
+  const handleFavorite = async () => {
+    if (!isAuthenticated) return;
+
+    if (isFavorited) {
+      // --- REMOVE LOGIC ---
+      const { error } = await supabase
+        .from("favorites")
+        .delete()
+        .eq("joke_id", targetId);
+
+      if (!error) {
+        // Tell Redux to remove it from the list
+        dispatch(toggleFavorite(joke));
+        setToast("Removed from favorites");
+      } else {
+        console.error("Error removing favorite:", error.message);
+      }
+    } else {
+      // Flatten Data for the Reducer
+      const cleanJokeData = {
+        ...joke,
+        text: jokeText,
+        category: isUserJoke ? "user" : joke.category || "general",
+        isUserJoke: isUserJoke,
+      };
+
+      const { error } = await supabase.from("favorites").insert([
+        {
+          joke_id: targetId,
+          category: isUserJoke ? "user" : joke.category || "general",
+          joke_data: cleanJokeData,
+        },
+      ]);
+
+      if (!error) {
+        // Tell Redux to add it to the list
+        dispatch(toggleFavorite(cleanJokeData));
+        setToast("Added to favorites!");
+      } else {
+        console.error("Error adding favorite:", error.message);
+      }
+    }
   };
 
-  const handleDelete = () => {
-    setShowDeleteConfirm(true);
+  const handleEditSave = async () => {
+    const { error } = await supabase
+      .from("jokes")
+      .update({ text: editValue })
+      .eq("id", targetId);
+    if (!error) {
+      dispatch(editUserJoke({ id: targetId, text: editValue }));
+      setIsEditing(false);
+      setToast("Updated!");
+    }
   };
 
-  const confirmDelete = () => {
-    dispatch(deleteUserJoke(joke.id));
-    setShowDeleteConfirm(false);
-    setToast("Joke deleted");
-    setTimeout(() => setToast(null), 1800);
-  };
+  const confirmDelete = async () => {
+    // 1. Delete the "Original" from your created jokes
+    const { error: jokeError } = await supabase
+      .from("jokes")
+      .delete()
+      .eq("id", targetId);
 
-  const cancelDelete = () => {
-    setShowDeleteConfirm(false);
-  };
+    // 2. Delete from favorites table too
+    const { error: favError } = await supabase
+      .from("favorites")
+      .delete()
+      .eq("joke_id", targetId);
 
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleEditChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditValue(e.target.value);
-  };
-
-  const handleEditSave = () => {
-    dispatch(editUserJoke({ id: joke.id, joke: editValue }));
-    setIsEditing(false);
-    setToast("Joke saved");
-    setTimeout(() => setToast(null), 1800);
-  };
-
-  const handleEditCancel = () => {
-    setEditValue(joke.joke || joke.setup || joke.text || "");
-    setIsEditing(false);
+    if (!jokeError && !favError) {
+      // 3. Update Redux
+      dispatch(deleteUserJoke(targetId));
+      setShowDeleteConfirm(false);
+      setToast("Joke permanently deleted");
+    } else {
+      console.error("Delete failed:", jokeError || favError);
+    }
   };
 
   return (
-    <div className="relative bg-white border border-slate-300 rounded-4xl shadow p-4 flex flex-col min-h-40 transition-transform hover:-translate-y-1 hover:shadow-lg ">
-      {/* Toast notification */}
+    <div className="relative bg-white border border-slate-300 rounded-3xl shadow p-5 flex flex-col min-h-40 transition-all hover:shadow-md">
       {toast && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/90 text-white px-4 py-2 rounded shadow-lg z-20 text-sm animate-fade-in">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-3 py-1 rounded-full z-20 text-xs shadow-lg animate-fade-in">
           {toast}
         </div>
       )}
-      {isEditing ? (
-        <div className="mb-2 flex flex-col gap-2">
-          <textarea
-            className="w-full border border-slate-300 rounded-md p-2 text-base font-medium text-slate-900"
-            value={editValue}
-            onChange={handleEditChange}
-            rows={3}
-            autoFocus
-          />
-          <div className="flex gap-2 justify-end">
+
+      <div className="flex-1">
+        {isEditing ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              className="w-full border border-purple-200 rounded-xl p-2 text-sm focus:ring-2 focus:ring-purple-100 outline-none"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              rows={3}
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={handleEditSave}
+                className="text-xs font-bold text-purple-600 px-2 py-1"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="text-xs font-bold text-slate-400 px-2 py-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="py-2">
+            {/* THE MASTER RENDER LOGIC */}
+            {jokeText ? (
+              <p className="text-slate-900 font-medium leading-relaxed">
+                {jokeText}
+              </p>
+            ) : hasTwoParts ? (
+              <div className="space-y-2">
+                <p className="text-slate-600 italic">{joke.setup}</p>
+                <p className="text-slate-900 font-bold">{joke.delivery}</p>
+              </div>
+            ) : (
+              <p className="text-red-400 italic text-sm">
+                Content missing in database.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-50">
+        <div className="flex gap-2">
+          {isUserJoke && !isEditing && (
+            <>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-2 text-slate-400 hover:text-purple-600 transition-colors"
+              >
+                <SquarePen size={18} />
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={18} />
+              </button>
+            </>
+          )}
+        </div>
+
+        <button
+          onClick={handleFavorite}
+          className={`p-2 rounded-xl transition-all ${isFavorited ? "text-purple-600 bg-purple-50 shadow-sm" : "text-slate-300 hover:text-purple-300"}`}
+        >
+          <Star size={22} fill={isFavorited ? "currentColor" : "none"} />
+        </button>
+      </div>
+
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-3xl flex flex-col items-center justify-center p-4 text-center z-10 shadow-inner">
+          <p className="text-sm font-bold text-slate-800 mb-3">
+            Delete permanently?
+          </p>
+          <div className="flex gap-3">
             <button
-              onClick={handleEditSave}
-              className="px-3 py-1 rounded bg-purple-600 text-white font-semibold hover:bg-purple-700 transition"
+              onClick={confirmDelete}
+              className="bg-red-500 text-white px-4 py-1 rounded-lg text-xs font-bold hover:bg-red-600"
             >
-              Save
+              Delete
             </button>
             <button
-              onClick={handleEditCancel}
-              className="px-3 py-1 rounded bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="bg-slate-200 text-slate-600 px-4 py-1 rounded-lg text-xs font-bold hover:bg-slate-300"
             >
               Cancel
             </button>
           </div>
         </div>
-      ) : joke.joke ? (
-        <p className="mb-2 text-base font-medium text-slate-900">{joke.joke}</p>
-      ) : joke.setup ? (
-        <div className="mb-2">
-          <p className="text-slate-700">{joke.setup}</p>
-          <br />
-          <p className="font-semibold text-slate-900 mt-2">{joke.delivery}</p>
-        </div>
-      ) : (
-        <p className="mb-2 text-base font-medium text-slate-900">{joke.text}</p>
       )}
-      <div className="flex justify-between w-full gap-2 mt-4">
-        <div className="space-x-4">
-          {isUserJoke && !isEditing && (
-            <>
-              <button
-                onClick={handleEdit}
-                className="rounded-md p-2 border border-slate-300 bg-slate-50 text-slate-500 hover:bg-orange-50 hover:text-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-200"
-                aria-label="Edit joke"
-              >
-                <SquarePen size={20} strokeWidth={2} />
-              </button>
-
-              <button
-                onClick={handleDelete}
-                className="rounded-md p-2 border border-slate-300 bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
-                aria-label="Delete joke"
-              >
-                <Trash2 size={20} strokeWidth={2} />
-              </button>
-
-              {/* Delete confirmation dialog */}
-              {showDeleteConfirm && (
-                <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40">
-                  <div className="bg-white rounded-xl shadow-lg p-6 max-w-xs w-full text-center">
-                    <p className="mb-4 text-slate-800 font-semibold">
-                      Are you sure you want to delete this joke?
-                    </p>
-                    <div className="flex gap-4 justify-center">
-                      <button
-                        onClick={confirmDelete}
-                        className="px-4 py-1 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={cancelDelete}
-                        className="px-4 py-1 rounded bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-        <div>
-          <button
-            onClick={handleFavorite}
-            aria-label={isFavorited ? "Unfavorite" : "Favorite"}
-            className={`rounded-md p-2 border ${
-              isFavorited
-                ? "bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
-                : "bg-slate-50 text-purple-600 border-slate-300 hover:bg-purple-50"
-            } transition-colors focus:outline-none focus:ring-2 focus:ring-purple-200`}
-          >
-            <Star
-              size={20}
-              fill={isFavorited ? "#fff" : "none"}
-              strokeWidth={2}
-            />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
