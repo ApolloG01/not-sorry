@@ -39,7 +39,7 @@ function UserJokes() {
     }
   };
 
-  const handleEdit = (id: number, text: string) => {
+  const handleEdit = (id: string | number, text: string) => {
     setEditingId(id);
     setEditText(text);
   };

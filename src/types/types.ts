@@ -1,8 +1,8 @@
 export interface JokeI {
-  id?: number | string;
+  id: number | string;
   joke_id?: number | string;
   supabase_id?: string;
-  text?: string;
+  text: string;
   isUserJoke?: boolean;
   category: string;
   setup?: string;

@@ -9,14 +9,3 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default supabase;
-
-const testConnection = async () => {
-  const { data, error } = await supabase.from("favorites").select("*").limit(1);
-  if (error) {
-    console.log("❌ Connection Error:", error.message);
-  } else {
-    console.log("✅ Connection Successful! Data:", data);
-  }
-};
-
-testConnection();

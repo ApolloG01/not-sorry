@@ -37,8 +37,7 @@ export default function SignUpPage() {
       setLoading(false);
     } else {
       // 3. Success Logic
-      // Note: If you have "Confirm Email" ON in Supabase,
-      // the user won't be able to log in until they click the link.
+
       alert(
         "Registration successful! Please check your email for a confirmation link.",
       );
