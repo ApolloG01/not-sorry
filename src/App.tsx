@@ -13,24 +13,21 @@ import LoginPage from "./pages/LoginPage.js";
 import SignUpPage from "./pages/SignUpPage.js";
 import PageNotFound from "./pages/PageNotFound.js";
 
-const router = createBrowserRouter(
-  [
-    {
-      path: "/",
-      element: <AppLayout />,
-      errorElement: <PageNotFound />,
-      children: [
-        { index: true, element: <ApiJokes /> },
-        { path: "api-jokes/:category", element: <ApiJokes /> },
-        { path: "my-jokes", element: <UserJokes /> },
-        { path: "favorites", element: <Favorites /> },
-        { path: "login", element: <LoginPage /> },
-        { path: "signup", element: <SignUpPage /> },
-      ],
-    },
-  ],
-  { basename: "/not-sorry" },
-);
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <AppLayout />,
+    errorElement: <PageNotFound />,
+    children: [
+      { index: true, element: <ApiJokes /> },
+      { path: "api-jokes/:category", element: <ApiJokes /> },
+      { path: "my-jokes", element: <UserJokes /> },
+      { path: "favorites", element: <Favorites /> },
+      { path: "login", element: <LoginPage /> },
+      { path: "signup", element: <SignUpPage /> },
+    ],
+  },
+]);
 
 function App() {
   const dispatch = useAppDispatch();
