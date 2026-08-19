@@ -29,7 +29,6 @@ const router = createBrowserRouter(
       ],
     },
   ],
-  { basename: "/not-sorry" },
 );
 
 function App() {
